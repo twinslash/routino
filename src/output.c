@@ -94,7 +94,7 @@ static int bearing_angle(Nodes *nodes,Segment *segment,index_t node);
 
 void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,Ways *ways,Profile *profile)
 {
- FILE *htmlfile=NULL,*gpxtrackfile=NULL,*gpxroutefile=NULL,*textfile=NULL,*textallfile=NULL;
+ FILE *htmlfile=NULL,*gpxtrackfile=NULL,*gpxroutefile=NULL,*textfile=NULL;
 
  int point=1;
  distance_t cum_distance=0;
@@ -117,8 +117,6 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
        gpxroutefile=fopen("shortest-route.gpx","w");
     if(option_text)
        textfile    =fopen("shortest.txt","w");
-    if(option_text_all)
-       textallfile =fopen("shortest-all.txt","w");
 
     if(option_html && !htmlfile)
        fprintf(stderr,"Warning: Cannot open file 'shortest.html' for writing [%s].\n",strerror(errno));
@@ -128,8 +126,6 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
        fprintf(stderr,"Warning: Cannot open file 'shortest-route.gpx' for writing [%s].\n",strerror(errno));
     if(option_text && !textfile)
        fprintf(stderr,"Warning: Cannot open file 'shortest.txt' for writing [%s].\n",strerror(errno));
-    if(option_text_all && !textallfile)
-       fprintf(stderr,"Warning: Cannot open file 'shortest-all.txt' for writing [%s].\n",strerror(errno));
    }
  else
    {
@@ -143,8 +139,6 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
        gpxroutefile=fopen("quickest-route.gpx","w");
     if(option_text)
        textfile    =fopen("quickest.txt","w");
-    if(option_text_all)
-       textallfile =fopen("quickest-all.txt","w");
 
     if(option_html && !htmlfile)
        fprintf(stderr,"Warning: Cannot open file 'quickest.html' for writing [%s].\n",strerror(errno));
@@ -154,8 +148,6 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
        fprintf(stderr,"Warning: Cannot open file 'quickest-route.gpx' for writing [%s].\n",strerror(errno));
     if(option_text && !textfile)
        fprintf(stderr,"Warning: Cannot open file 'quickest.txt' for writing [%s].\n",strerror(errno));
-    if(option_text_all && !textallfile)
-       fprintf(stderr,"Warning: Cannot open file 'quickest-all.txt' for writing [%s].\n",strerror(errno));
    }
 
  /* Print the head of the files */
@@ -271,24 +263,6 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
     fprintf(textfile,"#Latitude\tLongitude\tSection \tSection \tTotal   \tTotal   \tPoint\tTurn\tBearing\tHighway\n");
     fprintf(textfile,"#        \t         \tDistance\tDuration\tDistance\tDuration\tType \t    \t       \t       \n");
                      /* "%10.6f\t%11.6f\t%6.3f km\t%4.1f min\t%5.1f km\t%4.0f min\t%s\t %+d\t %+d\t%s\n" */
-   }
-
- if(textallfile)
-   {
-    if(translate_copyright_creator[0] && translate_copyright_creator[1])
-       fprintf(textallfile,"# %s : %s\n",translate_copyright_creator[0],translate_copyright_creator[1]);
-    if(translate_copyright_source[0] && translate_copyright_source[1])
-       fprintf(textallfile,"# %s : %s\n",translate_copyright_source[0],translate_copyright_source[1]);
-    if(translate_copyright_license[0] && translate_copyright_license[1])
-       fprintf(textallfile,"# %s : %s\n",translate_copyright_license[0],translate_copyright_license[1]);
-    if((translate_copyright_creator[0] && translate_copyright_creator[1]) ||
-       (translate_copyright_source[0]  && translate_copyright_source[1]) ||
-       (translate_copyright_license[0] && translate_copyright_license[1]))
-       fprintf(textallfile,"#\n");
-
-    fprintf(textallfile,"#Latitude\tLongitude\t    Node\tType\tSegment\tSegment\tTotal\tTotal  \tSpeed\tBearing\tHighway\n");
-    fprintf(textallfile,"#        \t         \t        \t    \tDist   \tDurat'n\tDist \tDurat'n\t     \t       \t       \n");
-                        /* "%10.6f\t%11.6f\t%8d%c\t%s\t%5.3f\t%5.2f\t%5.2f\t%5.1f\t%3d\t%4d\t%s\n" */
    }
 
  /* Loop through the segments of the route and print it */
@@ -575,7 +549,7 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
 
           /* Print out all of the results */
 
-          if(textallfile)
+          if(option_text_all)
             {
              char *type;
 
@@ -597,7 +571,7 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
                 bearing_str=translate_heading[(4+(22+bearing_int)/45)%8];
                }
 
-             fprintf(textallfile,"%10.6f\t%11.6f\t%8d%c\t%s\t%5.3f\t%5.2f\t%5.2f\t%5.1f\t%3d\t%4d\t%s\n",
+             fprintf(stdout,"%10.6f\t%11.6f\t%8d%c\t%s\t%5.3f\t%5.2f\t%5.2f\t%5.1f\t%3d\t%4d\t%s\n",
                                  radians_to_degrees(latitude),radians_to_degrees(longitude),
                                  IsFakeNode(result->node)?-(result->node&(~NODE_SUPER)):result->node,
                                  (!IsFakeNode(result->node) && IsSuperNode(nodes,result->node))?'*':' ',type,
@@ -641,8 +615,8 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
                               "Waypt",
                               (22+bearing_next_int)/45);
 
-          if(textallfile)
-             fprintf(textallfile,"%10.6f\t%11.6f\t%8d%c\t%s\t%5.3f\t%5.2f\t%5.2f\t%5.1f\t\t\t\n",
+          if(option_text_all)
+             fprintf(stdout,"%10.6f\t%11.6f\t%8d%c\t%s\t%5.3f\t%5.2f\t%5.2f\t%5.1f\t\t\t\n",
                                  radians_to_degrees(latitude),radians_to_degrees(longitude),
                                  IsFakeNode(result->node)?-(result->node&(~NODE_SUPER)):result->node,
                                  (!IsFakeNode(result->node) && IsSuperNode(nodes,result->node))?'*':' ',"Waypt",
@@ -706,8 +680,6 @@ void PrintRoute(Results **results,int nresults,Nodes *nodes,Segments *segments,W
     fclose(gpxroutefile);
  if(textfile)
     fclose(textfile);
- if(textallfile)
-    fclose(textallfile);
 }
 
 
